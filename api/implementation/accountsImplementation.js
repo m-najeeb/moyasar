@@ -12,30 +12,36 @@ const authHeader = {
   Authorization: `Basic ${Buffer.from(`${MOYASAR_API_KEY}:`).toString(
     "base64"
   )}`,
+  "Content-Type": "application/json",
 };
 
 class AccountsImplementation {
   async createPayoutAccount(data) {
     try {
-      const account = await axios.post(
+      console.log("Sending to Moyasar:", data);
+
+      const response = await axios.post(
         `${MOYASAR_BASE_URL}/payout_accounts`,
         data,
         { headers: authHeader }
       );
-      const response = await AccountsQueries.createPayoutAccount(account.data);
-      if (response) {
+
+      const saved = await AccountsQueries.createPayoutAccount(response.data);
+
+      if (saved) {
         ResponseService.status = constants.CODE.OK;
         return ResponseService.responseService(
           constants.STATUS.SUCCESS,
-          response,
+          saved,
           messages.SUCCESSFULLY_ADDED
         );
       }
     } catch (error) {
+      console.error("Moyasar error:", error.response?.data || error.message);
       ResponseService.status = constants.CODE.INTERNAL_SERVER_ERROR;
       return ResponseService.responseService(
         constants.STATUS.EXCEPTION,
-        error.message,
+        error.response?.data || error.message,
         messages.EXCEPTION
       );
     }
